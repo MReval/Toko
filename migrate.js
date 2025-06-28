@@ -4,8 +4,8 @@ import path from 'path';
 import FormData from 'form-data'; // Diperlukan untuk membuat FormData object
 
 const POCKETBASE_URL = 'http://127.0.0.1:8090'; // Sesuaikan jika perlu
-const POCKETBASE_ADMIN_EMAIL = 'admin@example.com'; // Ganti dengan email admin Anda
-const POCKETBASE_ADMIN_PASSWORD = 'password123'; // Ganti dengan password admin Anda
+const POCKETBASE_ADMIN_EMAIL = 'admin@admin.com'; // Ganti dengan email admin Anda
+const POCKETBASE_ADMIN_PASSWORD = 'admin12345'; // Ganti dengan password admin Anda
 const COLLECTION_NAME = 'products';
 
 const ASSETS_DIR = 'assets';
