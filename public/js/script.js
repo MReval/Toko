@@ -3,6 +3,7 @@
 // Fungsi untuk mengambil dan menampilkan produk akan ditambahkan di sini nanti.
 
 const productDataMap = {};
+let allProducts = [];
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM siap!");
@@ -21,11 +22,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Logika untuk halaman produk akan ditambahkan di sini
-    // Misalnya, mengambil data dari Pocketbase dan menampilkannya.
     if (document.getElementById('product-container')) {
-        // Fungsi ini akan dipanggil jika kita berada di halaman produk
         loadProducts();
+        const filterSelect = document.getElementById('categoryFilter');
+        const sortSelect = document.getElementById('sortSelect');
+        if (filterSelect) filterSelect.addEventListener('change', applyFilters);
+        if (sortSelect) sortSelect.addEventListener('change', applyFilters);
     }
 
     // Efek parallax sederhana untuk hero image jika ada
@@ -74,38 +76,20 @@ async function loadProducts() {
             return;
         }
 
-        productContainer.innerHTML = ''; // Bersihkan placeholder atau produk lama
-
-        records.forEach((product, index) => {
-            const imageUrl = product.image ? pb.files.getUrl(product, product.image) : 'https://via.placeholder.com/300x200.png?text=No+Image';
-
-            productDataMap[product.id] = {
-                name: product.name || 'Nama Produk Tidak Tersedia',
-                description: product.description || 'Deskripsi tidak tersedia.',
-                image: imageUrl
+        allProducts = records.map(record => {
+            const imageUrl = record.image ? pb.files.getUrl(record, record.image) : 'https://via.placeholder.com/300x200.png?text=No+Image';
+            return {
+                id: record.id,
+                name: record.name || 'Nama Produk Tidak Tersedia',
+                description: record.description || 'Deskripsi tidak tersedia.',
+                image: imageUrl,
+                category: record.category || 'Umum',
+                price: record.price || 0,
+                stock: record.stock
             };
-
-            const productCard = `
-                <div class="col">
-                    <div class="card product-card h-100" style="animation-delay: ${index * 0.1}s">
-                        <img src="${imageUrl}" class="card-img-top" alt="${product.name || 'Gambar Produk'}">
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title">${product.name || 'Nama Produk Tidak Tersedia'}</h5>
-                            <p class="card-text flex-grow-1">${product.description || 'Deskripsi tidak tersedia.'}</p>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="badge bg-primary">${product.category || 'Umum'}</span>
-                                <span class="price">Rp ${product.price ? product.price.toLocaleString('id-ID') : 'N/A'}</span>
-                            </div>
-                            <p class="card-text"><small class="text-muted">Stok: ${product.stock !== undefined ? product.stock : 'N/A'}</small></p>
-                            <button class="btn btn-outline-danger mt-auto detail-btn" data-id="${product.id}">Detail Produk</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            productContainer.innerHTML += productCard;
         });
 
-        attachDetailEvents();
+        displayProducts(allProducts);
 
     } catch (error) {
         console.error('Error fetching products from Pocketbase:', error);
@@ -157,36 +141,73 @@ function displayDummyProducts(container) {
         }
     ];
 
-    container.innerHTML = ''; // Bersihkan container
+    allProducts = dummyProducts.map(p => ({
+        id: p.id,
+        name: p.name,
+        description: p.description,
+        image: p.image_url,
+        category: p.category,
+        price: p.price,
+        stock: p.stock
+    }));
 
-    dummyProducts.forEach((product, index) => {
+    displayProducts(allProducts);
+}
+
+function displayProducts(products) {
+    const container = document.getElementById('product-container');
+    if (!container) return;
+    container.innerHTML = '';
+
+    products.forEach((product, index) => {
         productDataMap[product.id] = {
             name: product.name,
             description: product.description,
-            image: product.image_url
+            image: product.image
         };
 
-        const productCard = `
+        const card = `
             <div class="col">
                 <div class="card product-card h-100" style="animation-delay: ${index * 0.1}s">
-                    <img src="${product.image_url}" class="card-img-top" alt="${product.name}">
+                    <img src="${product.image}" class="card-img-top" alt="${product.name}">
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">${product.name}</h5>
                         <p class="card-text flex-grow-1">${product.description}</p>
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                             <span class="badge bg-primary">${product.category}</span>
-                             <span class="price">Rp ${product.price.toLocaleString('id-ID')}</span>
+                            <span class="badge bg-primary">${product.category}</span>
+                            <span class="price">Rp ${product.price.toLocaleString('id-ID')}</span>
                         </div>
                         <p class="card-text"><small class="text-muted">Stok: ${product.stock}</small></p>
                         <button class="btn btn-outline-danger mt-auto detail-btn" data-id="${product.id}">Detail Produk</button>
                     </div>
                 </div>
-            </div>
-        `;
-        container.innerHTML += productCard;
+            </div>`;
+        container.innerHTML += card;
     });
 
     attachDetailEvents();
+}
+
+function applyFilters() {
+    const filterSelect = document.getElementById('categoryFilter');
+    const sortSelect = document.getElementById('sortSelect');
+    let filtered = [...allProducts];
+
+    if (filterSelect && filterSelect.value !== 'all') {
+        filtered = filtered.filter(p => p.category === filterSelect.value);
+    }
+
+    if (sortSelect) {
+        if (sortSelect.value === 'price') {
+            filtered.sort((a, b) => a.price - b.price);
+        } else if (sortSelect.value === '-price') {
+            filtered.sort((a, b) => b.price - a.price);
+        } else if (sortSelect.value === 'name') {
+            filtered.sort((a, b) => a.name.localeCompare(b.name));
+        }
+    }
+
+    displayProducts(filtered);
 }
 
 function attachDetailEvents() {
