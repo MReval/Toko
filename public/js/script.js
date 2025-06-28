@@ -221,6 +221,7 @@ function openProductModal(data) {
     if (waBtn) {
         const msg = encodeURIComponent(`Hai, aku mengunjungi website kalian dan tertarik pada produk ${data.name}`);
         waBtn.href = `https://wa.me/6281289839168?text=${msg}`;
+        waBtn.textContent = 'pesan sekarang, melalui whatsapp';
     }
 
     const modalElement = document.getElementById('productModal');
