@@ -6,9 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "migrate": "node migrate.js"
   },
   "devDependencies": {
+    "pocketbase": "^0.26.1",
     "vite": "^7.0.0"
   }
 }

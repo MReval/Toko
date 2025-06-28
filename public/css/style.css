@@ -29,10 +29,10 @@ body {
 #hero {
     position: relative;
     height: 90vh; /* Tinggi viewport - tinggi navbar */
-    /* GANTI URL ini dengan path ke 'home.jpg' Anda, contoh: background-image: url('../images/home.jpg'); */
-    background-image: url('https://source.unsplash.com/1600x900/?cake,bakery'); /* Placeholder image */
+    background-image: url('../../assets/home.jpg'); /* Path relatif dari style.css ke home.jpg */
     background-size: cover;
     background-position: center;
+    background-repeat: no-repeat;
     color: white;
     text-align: center;
     display: flex;
