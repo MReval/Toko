@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Efek parallax sederhana untuk hero image jika ada
     const hero = document.getElementById('hero');
     if (hero) {
-        window.addEventListener('scroll', function() {
+        window.addEventListener('scroll', function () {
             const offset = window.pageYOffset;
             hero.style.backgroundPositionY = offset * 0.7 + 'px';
         });
@@ -130,7 +130,7 @@ function displayDummyProducts(container) {
             price: 3000,
             stock: 30
         },
-         {
+        {
             id: 'dummy4',
             name: 'Pastel Isi (Dummy)',
             description: 'Pastel renyah dengan isian bihun dan sayuran, cocok untuk camilan.',
@@ -194,8 +194,10 @@ function applyFilters() {
     let filtered = [...allProducts];
 
     if (filterSelect && filterSelect.value !== 'all') {
-        filtered = filtered.filter(p => p.category === filterSelect.value);
+        const selectedCategory = filterSelect.value.trim().toLowerCase();
+        filtered = filtered.filter(p => p.category.trim().toLowerCase() === selectedCategory);
     }
+
 
     if (sortSelect) {
         if (sortSelect.value === 'price') {
@@ -251,15 +253,3 @@ function openProductModal(data) {
         modal.show();
     }
 }
-
-// Panggil loadProducts jika kita berada di halaman produk.
-// Ini akan di-trigger oleh DOMContentLoaded di atas.
-// Jika Anda ingin memanggilnya secara eksplisit setelah DOMContentLoaded:
-// if (document.readyState === 'loading') {
-//     document.addEventListener('DOMContentLoaded', loadProducts);
-// } else {
-//     // DOMContentLoaded sudah selesai
-//     if (document.getElementById('product-container')) {
-//         loadProducts();
-//     }
-// }
