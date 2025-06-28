@@ -12,5 +12,12 @@
   "devDependencies": {
     "pocketbase": "^0.26.1",
     "vite": "^7.0.0"
+  },
+  "dependencies": {
+    "fetch-blob": "^4.0.0",
+    "file-type": "^21.0.0",
+    "form-data": "^4.0.3",
+    "mime-types": "^3.0.1",
+    "node-fetch": "^3.3.2"
   }
 }
