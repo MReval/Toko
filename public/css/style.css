@@ -4,6 +4,26 @@ body {
     padding-top: 56px; /* Adjusted for fixed navbar */
 }
 
+/* Styling untuk modal produk */
+.modal-content {
+    position: relative;
+    padding-bottom: 4rem; /* ruang untuk tombol WA */
+}
+
+/* Tombol WhatsApp di pojok kanan bawah modal */
+.wa-order-button {
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+    background-color: #25D366;
+    color: #fff !important;
+    border: none;
+}
+
+.wa-order-button:hover {
+    background-color: #1ebe5d;
+}
+
 .navbar-brand {
     font-family: 'Pacifico', cursive;
     font-size: 1.8rem;
