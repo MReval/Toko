@@ -40,7 +40,23 @@
 
     <main class="container mt-5 pt-5">
         <section id="produk-list" class="py-5">
-            <h1 class="text-center mb-5 section-title" style="margin-top: 20px;">Produk Kami</h1>
+            <h1 class="text-center mb-4 section-title" style="margin-top: 20px;">Produk Kami</h1>
+            <div id="product-controls" class="row justify-content-center mb-4">
+                <div class="col-md-4 mb-2">
+                    <select id="categoryFilter" class="form-select">
+                        <option value="all">Semua Kategori</option>
+                        <option value="Gorengan">Gorengan</option>
+                        <option value="Non Gorengan">Non Gorengan</option>
+                    </select>
+                </div>
+                <div class="col-md-4 mb-2">
+                    <select id="sortSelect" class="form-select">
+                        <option value="name">Urutkan: Nama</option>
+                        <option value="price">Harga Terendah</option>
+                        <option value="-price">Harga Tertinggi</option>
+                    </select>
+                </div>
+            </div>
             <div id="product-container" class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
                 <!-- Produk akan dimuat di sini oleh JavaScript -->
             </div>
