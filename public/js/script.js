@@ -2,6 +2,8 @@
 // Untuk saat ini, kita akan membiarkannya kosong atau dengan komentar dasar.
 // Fungsi untuk mengambil dan menampilkan produk akan ditambahkan di sini nanti.
 
+const productDataMap = {};
+
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM siap!");
 
@@ -75,9 +77,13 @@ async function loadProducts() {
         productContainer.innerHTML = ''; // Bersihkan placeholder atau produk lama
 
         records.forEach((product, index) => {
-            // Untuk mendapatkan URL gambar dari Pocketbase:
-            // pb.files.getUrl(record, filename, queryParams = {})
             const imageUrl = product.image ? pb.files.getUrl(product, product.image) : 'https://via.placeholder.com/300x200.png?text=No+Image';
+
+            productDataMap[product.id] = {
+                name: product.name || 'Nama Produk Tidak Tersedia',
+                description: product.description || 'Deskripsi tidak tersedia.',
+                image: imageUrl
+            };
 
             const productCard = `
                 <div class="col">
@@ -91,13 +97,15 @@ async function loadProducts() {
                                 <span class="price">Rp ${product.price ? product.price.toLocaleString('id-ID') : 'N/A'}</span>
                             </div>
                             <p class="card-text"><small class="text-muted">Stok: ${product.stock !== undefined ? product.stock : 'N/A'}</small></p>
-                            <a href="#" class="btn btn-outline-danger mt-auto">Detail Produk</a>
+                            <button class="btn btn-outline-danger mt-auto detail-btn" data-id="${product.id}">Detail Produk</button>
                         </div>
                     </div>
                 </div>
             `;
             productContainer.innerHTML += productCard;
         });
+
+        attachDetailEvents();
 
     } catch (error) {
         console.error('Error fetching products from Pocketbase:', error);
@@ -152,6 +160,12 @@ function displayDummyProducts(container) {
     container.innerHTML = ''; // Bersihkan container
 
     dummyProducts.forEach((product, index) => {
+        productDataMap[product.id] = {
+            name: product.name,
+            description: product.description,
+            image: product.image_url
+        };
+
         const productCard = `
             <div class="col">
                 <div class="card product-card h-100" style="animation-delay: ${index * 0.1}s">
@@ -164,13 +178,56 @@ function displayDummyProducts(container) {
                              <span class="price">Rp ${product.price.toLocaleString('id-ID')}</span>
                         </div>
                         <p class="card-text"><small class="text-muted">Stok: ${product.stock}</small></p>
-                        <a href="#" class="btn btn-outline-danger mt-auto">Detail Produk</a>
+                        <button class="btn btn-outline-danger mt-auto detail-btn" data-id="${product.id}">Detail Produk</button>
                     </div>
                 </div>
             </div>
         `;
         container.innerHTML += productCard;
     });
+
+    attachDetailEvents();
+}
+
+function attachDetailEvents() {
+    document.querySelectorAll('.detail-btn').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            const id = this.dataset.id;
+            const data = productDataMap[id];
+            if (data) {
+                openProductModal(data);
+            }
+        });
+    });
+}
+
+function openProductModal(data) {
+    const img = document.getElementById('modalProductImage');
+    const nameEl = document.getElementById('modalProductName');
+    const descEl = document.getElementById('modalProductDescription');
+    const waBtn = document.getElementById('waOrderButton');
+
+    if (img) {
+        img.src = data.image;
+        img.alt = data.name;
+    }
+    if (nameEl) {
+        nameEl.textContent = data.name;
+    }
+    if (descEl) {
+        descEl.textContent = data.description;
+    }
+    if (waBtn) {
+        const msg = encodeURIComponent(`Hai, aku mengunjungi website kalian dan tertarik pada produk ${data.name}`);
+        waBtn.href = `https://wa.me/6281289839168?text=${msg}`;
+    }
+
+    const modalElement = document.getElementById('productModal');
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+    }
 }
 
 // Panggil loadProducts jika kita berada di halaman produk.
