@@ -4,6 +4,8 @@
 
 const productDataMap = {};
 let allProducts = [];
+let pbClient;
+const cart = [];
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log("DOM siap!");
@@ -56,6 +58,7 @@ async function loadProducts() {
         pb = new PocketBase(pocketbaseUrl);
         // Coba test koneksi (opsional, tapi bagus untuk debugging)
         await pb.health.check();
+        pbClient = pb;
         console.log("Berhasil terhubung ke Pocketbase:", pocketbaseUrl);
     } catch (error) {
         console.warn("Gagal terhubung ke Pocketbase di", pocketbaseUrl, ". Menggunakan data dummy.", error);
@@ -178,7 +181,8 @@ function displayProducts(products) {
                             <span class="price">Rp ${product.price.toLocaleString('id-ID')}</span>
                         </div>
                         <p class="card-text"><small class="text-muted">Stok: ${product.stock}</small></p>
-                        <button class="btn btn-outline-danger mt-auto detail-btn" data-id="${product.id}">Detail Produk</button>
+                        <button class="btn btn-outline-danger detail-btn mb-2" data-id="${product.id}">Detail Produk</button>
+                        <button class="btn btn-primary add-cart-btn mt-auto" data-id="${product.id}">Tambah ke Keranjang</button>
                     </div>
                 </div>
             </div>`;
@@ -186,6 +190,7 @@ function displayProducts(products) {
     });
 
     attachDetailEvents();
+    attachCartEvents();
 }
 
 function applyFilters() {
@@ -253,3 +258,114 @@ function openProductModal(data) {
         modal.show();
     }
 }
+
+function attachCartEvents() {
+    document.querySelectorAll('.add-cart-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            addToCart(btn.dataset.id);
+        });
+    });
+}
+
+function addToCart(productId) {
+    const product = allProducts.find(p => p.id === productId);
+    if (!product) return;
+    const existing = cart.find(item => item.id === productId);
+    if (existing) {
+        existing.qty += 1;
+    } else {
+        cart.push({ id: product.id, name: product.name, price: product.price, qty: 1 });
+    }
+    updateCartUI();
+}
+
+function computeTotal() {
+    return cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+}
+
+function updateCartUI() {
+    const list = document.getElementById('cartItems');
+    const totalEl = document.getElementById('cartTotal');
+    if (!list || !totalEl) return;
+    list.innerHTML = '';
+    cart.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = `${item.name} x${item.qty} - Rp ${item.price.toLocaleString('id-ID')}`;
+        list.appendChild(li);
+    });
+    totalEl.textContent = `Total: Rp ${computeTotal().toLocaleString('id-ID')}`;
+}
+
+function showCart() {
+    updateCartUI();
+    document.getElementById('cartOverlay').classList.remove('d-none');
+}
+
+function hideCart() {
+    document.getElementById('cartOverlay').classList.add('d-none');
+}
+
+function showCheckoutForm() {
+    const content = document.getElementById('cartContent');
+    const total = computeTotal();
+    if (!content) return;
+    content.innerHTML = `
+        <form id="checkoutForm">
+            <div class="mb-3">
+                <label class="form-label">Nama</label>
+                <input type="text" class="form-control" id="checkoutName" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Alamat</label>
+                <textarea class="form-control" id="checkoutAddress" required></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">No HP</label>
+                <input type="text" class="form-control" id="checkoutPhone" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Total Harga</label>
+                <input type="text" class="form-control" id="checkoutTotal" readonly value="Rp ${total.toLocaleString('id-ID')}">
+            </div>
+            <button type="submit" class="btn btn-success">Kirim Pesanan</button>
+        </form>`;
+    document.getElementById('checkoutForm').addEventListener('submit', submitCheckout);
+}
+
+async function submitCheckout(e) {
+    e.preventDefault();
+    if (!pbClient) {
+        try {
+            pbClient = new PocketBase('http://127.0.0.1:8090');
+            await pbClient.health.check();
+        } catch (err) {
+            alert('Gagal terhubung ke server');
+            return;
+        }
+    }
+    const data = {
+        name: document.getElementById('checkoutName').value,
+        address: document.getElementById('checkoutAddress').value,
+        phone: document.getElementById('checkoutPhone').value,
+        total: computeTotal(),
+        items: JSON.stringify(cart)
+    };
+    try {
+        await pbClient.collection('orders').create(data);
+        alert('Pesanan berhasil dikirim');
+        cart.length = 0;
+        hideCart();
+    } catch (err) {
+        console.error(err);
+        alert('Gagal mengirim pesanan');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const cartBtn = document.getElementById('cartButton');
+    const closeBtn = document.getElementById('closeCartButton');
+    const checkoutBtn = document.getElementById('checkoutButton');
+    if (cartBtn) cartBtn.addEventListener('click', showCart);
+    if (closeBtn) closeBtn.addEventListener('click', hideCart);
+    if (checkoutBtn) checkoutBtn.addEventListener('click', showCheckoutForm);
+});

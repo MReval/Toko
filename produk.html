@@ -32,6 +32,9 @@
                         <li class="nav-item">
                             <a class="nav-link" href="index.html#kontak">Kontak</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" id="cartButton">Keranjang</a>
+                        </li>
                     </ul>
                 </div>
             </div>
@@ -62,6 +65,19 @@
             </div>
         </section>
     </main>
+
+    <!-- Cart Floating Window -->
+    <div id="cartOverlay" class="cart-overlay d-none">
+        <div class="cart-window">
+            <div id="cartContent">
+                <h5 class="mb-3">Keranjang</h5>
+                <ul id="cartItems" class="list-unstyled"></ul>
+                <div id="cartTotal" class="fw-bold mb-3"></div>
+                <button id="checkoutButton" class="btn btn-success mb-2">Checkout</button>
+                <button id="closeCartButton" class="btn btn-secondary">Tutup</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal untuk detail produk -->
     <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
