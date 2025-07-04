@@ -270,9 +270,18 @@ function attachCartEvents() {
 function addToCart(productId) {
     const product = allProducts.find(p => p.id === productId);
     if (!product) return;
+    if (product.stock <= 0) {
+        alert('Stok produk habis');
+        return;
+    }
     const existing = cart.find(item => item.id === productId);
     if (existing) {
-        existing.qty += 1;
+        if (existing.qty < product.stock) {
+            existing.qty += 1;
+        } else {
+            alert('Jumlah melebihi stok yang tersedia');
+            return;
+        }
     } else {
         cart.push({ id: product.id, name: product.name, price: product.price, qty: 1 });
     }
@@ -290,10 +299,51 @@ function updateCartUI() {
     list.innerHTML = '';
     cart.forEach(item => {
         const li = document.createElement('li');
-        li.textContent = `${item.name} x${item.qty} - Rp ${item.price.toLocaleString('id-ID')}`;
+        li.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span>${item.name}</span>
+                <div class="input-group input-group-sm" style="width: 110px;">
+                    <button class="btn btn-outline-secondary btn-dec" data-id="${item.id}">-</button>
+                    <input type="number" min="1" class="form-control text-center qty-input" data-id="${item.id}" value="${item.qty}">
+                    <button class="btn btn-outline-secondary btn-inc" data-id="${item.id}">+</button>
+                </div>
+            </div>
+            <small>Rp ${item.price.toLocaleString('id-ID')}</small>`;
         list.appendChild(li);
     });
     totalEl.textContent = `Total: Rp ${computeTotal().toLocaleString('id-ID')}`;
+    attachQtyEvents();
+}
+
+function attachQtyEvents() {
+    document.querySelectorAll('.btn-inc').forEach(btn => {
+        btn.onclick = () => changeQty(btn.dataset.id, 1);
+    });
+    document.querySelectorAll('.btn-dec').forEach(btn => {
+        btn.onclick = () => changeQty(btn.dataset.id, -1);
+    });
+    document.querySelectorAll('.qty-input').forEach(input => {
+        input.onchange = () => setQty(input.dataset.id, parseInt(input.value, 10));
+    });
+}
+
+function changeQty(id, delta) {
+    const item = cart.find(i => i.id === id);
+    if (!item) return;
+    const product = allProducts.find(p => p.id === id);
+    const maxQty = product ? product.stock : Infinity;
+    item.qty = Math.min(Math.max(1, item.qty + delta), maxQty);
+    updateCartUI();
+}
+
+function setQty(id, qty) {
+    const item = cart.find(i => i.id === id);
+    if (!item) return;
+    const product = allProducts.find(p => p.id === id);
+    const maxQty = product ? product.stock : Infinity;
+    if (isNaN(qty) || qty < 1) qty = 1;
+    item.qty = Math.min(qty, maxQty);
+    updateCartUI();
 }
 
 function showCart() {
@@ -352,9 +402,21 @@ async function submitCheckout(e) {
     };
     try {
         await pbClient.collection('orders').create(data);
+        for (const item of cart) {
+            try {
+                const product = allProducts.find(p => p.id === item.id);
+                if (!product) continue;
+                const newStock = Math.max(0, product.stock - item.qty);
+                await pbClient.collection('products').update(item.id, { stock: newStock });
+                product.stock = newStock;
+            } catch (err) {
+                console.error('Gagal memperbarui stok', err);
+            }
+        }
         alert('Pesanan berhasil dikirim');
         cart.length = 0;
         hideCart();
+        displayProducts(allProducts);
     } catch (err) {
         console.error(err);
         alert('Gagal mengirim pesanan');

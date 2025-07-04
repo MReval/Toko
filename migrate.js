@@ -11,6 +11,7 @@ const POCKETBASE_ADMIN_PASSWORD = 'admin12345';
 const COLLECTION_NAME = 'products';
 const ASSETS_DIR = 'assets';
 const CATEGORIES = ['gorengan', 'non gorengan'];
+const CART_DATA_FILE = 'cartData.json';
 
 async function migrateData() {
     const pb = new PocketBase(POCKETBASE_URL);
@@ -78,6 +79,7 @@ async function migrateData() {
             }
         }
 
+        await migrateOrders(pb);
         console.log('\n✅ Migration completed successfully!');
     } catch (error) {
         console.error('Migration failed:');
@@ -85,6 +87,48 @@ async function migrateData() {
             console.error('Response data:', JSON.stringify(error.response.data, null, 2));
         } else {
             console.error(error);
+        }
+    }
+}
+
+async function migrateOrders(pb) {
+    try {
+        const raw = await fs.readFile(CART_DATA_FILE, 'utf8');
+        const orders = JSON.parse(raw);
+        if (!Array.isArray(orders)) {
+            console.warn('Cart data is not an array. Skipping order migration.');
+            return;
+        }
+        for (const order of orders) {
+            try {
+                const record = await pb.collection('orders').create({
+                    name: order.name,
+                    address: order.address,
+                    phone: order.phone,
+                    total: order.total,
+                    items: JSON.stringify(order.items)
+                });
+                console.log(`✅ Created order [ID: ${record.id}]`);
+                if (Array.isArray(order.items)) {
+                    for (const item of order.items) {
+                        try {
+                            const prod = await pb.collection(COLLECTION_NAME).getOne(item.id);
+                            const newStock = Math.max(0, (prod.stock || 0) - item.qty);
+                            await pb.collection(COLLECTION_NAME).update(item.id, { stock: newStock });
+                        } catch (err) {
+                            console.error('Failed to update stock for item', item.id, err);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Error creating order:', err);
+            }
+        }
+    } catch (err) {
+        if (err.code === 'ENOENT') {
+            console.log(`Cart data file not found: ${CART_DATA_FILE}. Skipping order migration.`);
+        } else {
+            console.error('Failed to read cart data file:', err);
         }
     }
 }
