@@ -259,6 +259,7 @@ footer {
     background: #fff;
     padding: 20px;
     border-radius: 10px;
+    position: relative;
     width: 90%;
     max-width: 500px;
     max-height: 80%;
