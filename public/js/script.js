@@ -171,7 +171,7 @@ function displayProducts(products) {
 
         const card = `
             <div class="col">
-                <div class="card product-card h-100" style="animation-delay: ${index * 0.1}s">
+                <div class="card product-card h-100" data-id="${product.id}" style="animation-delay: ${index * 0.1}s">
                     <img src="${product.image}" class="card-img-top" alt="${product.name}">
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title">${product.name}</h5>
@@ -181,7 +181,11 @@ function displayProducts(products) {
                             <span class="price">Rp ${product.price.toLocaleString('id-ID')}</span>
                         </div>
                         <p class="card-text"><small class="text-muted">Stok: ${product.stock}</small></p>
-                        <button class="btn btn-outline-danger detail-btn mb-2" data-id="${product.id}">Detail Produk</button>
+                        <div class="input-group input-group-sm mb-2 qty-control" data-id="${product.id}">
+                            <button class="btn btn-outline-secondary qty-dec" data-id="${product.id}">-</button>
+                            <input type="number" min="1" value="1" class="form-control text-center qty-input-card" data-id="${product.id}">
+                            <button class="btn btn-outline-secondary qty-inc" data-id="${product.id}">+</button>
+                        </div>
                         <button class="btn btn-primary add-cart-btn mt-auto" data-id="${product.id}">Tambah ke Keranjang</button>
                     </div>
                 </div>
@@ -218,15 +222,20 @@ function applyFilters() {
 }
 
 function attachDetailEvents() {
-    document.querySelectorAll('.detail-btn').forEach(btn => {
-        btn.addEventListener('click', function (e) {
-            e.preventDefault();
+    document.querySelectorAll('.product-card').forEach(card => {
+        card.addEventListener('click', function (e) {
+            if (e.target.closest('.qty-control') || e.target.closest('.add-cart-btn')) {
+                return;
+            }
             const id = this.dataset.id;
             const data = productDataMap[id];
             if (data) {
                 openProductModal(data);
             }
         });
+    });
+    document.querySelectorAll('.add-cart-btn, .qty-control *').forEach(el => {
+        el.addEventListener('click', e => e.stopPropagation());
     });
 }
 
@@ -262,28 +271,41 @@ function openProductModal(data) {
 function attachCartEvents() {
     document.querySelectorAll('.add-cart-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            addToCart(btn.dataset.id);
+            const id = btn.dataset.id;
+            const input = document.querySelector(`.qty-input-card[data-id="${id}"]`);
+            const qty = input ? parseInt(input.value, 10) || 1 : 1;
+            addToCart(id, qty);
         });
+    });
+    document.querySelectorAll('.qty-inc').forEach(btn => {
+        btn.addEventListener('click', () => adjustCardQty(btn.dataset.id, 1));
+    });
+    document.querySelectorAll('.qty-dec').forEach(btn => {
+        btn.addEventListener('click', () => adjustCardQty(btn.dataset.id, -1));
+    });
+    document.querySelectorAll('.qty-input-card').forEach(input => {
+        input.addEventListener('change', () => setCardQty(input.dataset.id, parseInt(input.value, 10)));
     });
 }
 
-function addToCart(productId) {
+function addToCart(productId, qty = 1) {
     const product = allProducts.find(p => p.id === productId);
     if (!product) return;
     if (product.stock <= 0) {
         alert('Stok produk habis');
         return;
     }
+    qty = Math.min(qty, product.stock);
     const existing = cart.find(item => item.id === productId);
     if (existing) {
-        if (existing.qty < product.stock) {
-            existing.qty += 1;
+        if (existing.qty + qty <= product.stock) {
+            existing.qty += qty;
         } else {
             alert('Jumlah melebihi stok yang tersedia');
             return;
         }
     } else {
-        cart.push({ id: product.id, name: product.name, price: product.price, qty: 1 });
+        cart.push({ id: product.id, name: product.name, price: product.price, qty });
     }
     updateCartUI();
 }
@@ -344,6 +366,25 @@ function setQty(id, qty) {
     if (isNaN(qty) || qty < 1) qty = 1;
     item.qty = Math.min(qty, maxQty);
     updateCartUI();
+}
+
+function adjustCardQty(id, delta) {
+    const input = document.querySelector(`.qty-input-card[data-id="${id}"]`);
+    if (!input) return;
+    const product = allProducts.find(p => p.id === id);
+    const max = product ? product.stock : Infinity;
+    let val = parseInt(input.value, 10) || 1;
+    val = Math.min(Math.max(1, val + delta), max);
+    input.value = val;
+}
+
+function setCardQty(id, qty) {
+    const input = document.querySelector(`.qty-input-card[data-id="${id}"]`);
+    if (!input) return;
+    const product = allProducts.find(p => p.id === id);
+    const max = product ? product.stock : Infinity;
+    if (isNaN(qty) || qty < 1) qty = 1;
+    input.value = Math.min(qty, max);
 }
 
 function renderCartView() {
