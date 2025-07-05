@@ -170,6 +170,11 @@ body {
     color: #d63384;
 }
 
+/* Quantity controls on product card */
+.qty-control input {
+    max-width: 60px;
+}
+
 /* Animasi dan styling untuk filter */
 #product-controls {
     opacity: 0;
