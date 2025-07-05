@@ -346,8 +346,25 @@ function setQty(id, qty) {
     updateCartUI();
 }
 
-function showCart() {
+function renderCartView() {
+    const content = document.getElementById('cartContent');
+    if (!content) return;
+    content.innerHTML = `
+        <button type="button" class="btn-close position-absolute top-0 end-0 m-2" id="closeCartXButton" aria-label="Close"></button>
+        <h5 class="mb-3">Keranjang</h5>
+        <ul id="cartItems" class="list-unstyled"></ul>
+        <div id="cartTotal" class="fw-bold mb-3"></div>
+        <button id="checkoutButton" class="btn btn-success mb-2">Checkout</button>
+        <button id="closeCartButton" class="btn btn-secondary">Tutup</button>
+    `;
+    document.getElementById('checkoutButton').addEventListener('click', showCheckoutForm);
+    document.getElementById('closeCartButton').addEventListener('click', hideCart);
+    document.getElementById('closeCartXButton').addEventListener('click', hideCart);
     updateCartUI();
+}
+
+function showCart() {
+    renderCartView();
     document.getElementById('cartOverlay').classList.remove('d-none');
 }
 
@@ -360,6 +377,7 @@ function showCheckoutForm() {
     const total = computeTotal();
     if (!content) return;
     content.innerHTML = `
+        <button type="button" class="btn-close position-absolute top-0 end-0 m-2" id="closeCartXButton" aria-label="Close"></button>
         <form id="checkoutForm">
             <div class="mb-3">
                 <label class="form-label">Nama</label>
@@ -377,9 +395,14 @@ function showCheckoutForm() {
                 <label class="form-label">Total Harga</label>
                 <input type="text" class="form-control" id="checkoutTotal" readonly value="Rp ${total.toLocaleString('id-ID')}">
             </div>
-            <button type="submit" class="btn btn-success">Kirim Pesanan</button>
+            <div class="d-flex justify-content-between">
+                <button type="button" class="btn btn-secondary" id="backToCartButton">Kembali</button>
+                <button type="submit" class="btn btn-success">Kirim Pesanan</button>
+            </div>
         </form>`;
     document.getElementById('checkoutForm').addEventListener('submit', submitCheckout);
+    document.getElementById('backToCartButton').addEventListener('click', renderCartView);
+    document.getElementById('closeCartXButton').addEventListener('click', hideCart);
 }
 
 async function submitCheckout(e) {
@@ -416,6 +439,7 @@ async function submitCheckout(e) {
         alert('Pesanan berhasil dikirim');
         cart.length = 0;
         hideCart();
+        renderCartView();
         displayProducts(allProducts);
     } catch (err) {
         console.error(err);
@@ -425,9 +449,5 @@ async function submitCheckout(e) {
 
 document.addEventListener('DOMContentLoaded', () => {
     const cartBtn = document.getElementById('cartButton');
-    const closeBtn = document.getElementById('closeCartButton');
-    const checkoutBtn = document.getElementById('checkoutButton');
     if (cartBtn) cartBtn.addEventListener('click', showCart);
-    if (closeBtn) closeBtn.addEventListener('click', hideCart);
-    if (checkoutBtn) checkoutBtn.addEventListener('click', showCheckoutForm);
 });
