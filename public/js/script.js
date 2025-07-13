@@ -52,7 +52,7 @@ async function loadProducts() {
     // Contoh: const pb = new PocketBase('http://127.0.0.1:8090');
     // Untuk sekarang, kita akan menggunakan data dummy karena URL Pocketbase belum tersedia.
     let pb;
-    const pocketbaseUrl = 'http://127.0.0.1:8090'; // Ganti jika perlu atau buat ini bisa dikonfigurasi
+    const pocketbaseUrl = 'https://gs7wtjsz-8090.asse.devtunnels.ms/'; // Ganti jika perlu atau buat ini bisa dikonfigurasi
 
     try {
         pb = new PocketBase(pocketbaseUrl);
@@ -196,7 +196,7 @@ function displayProducts(products) {
     attachDetailEvents();
     attachCartEvents();
 }
-
+//Filtering,Sorting,Kategori
 function applyFilters() {
     const filterSelect = document.getElementById('categoryFilter');
     const sortSelect = document.getElementById('sortSelect');
@@ -386,7 +386,7 @@ function setCardQty(id, qty) {
     if (isNaN(qty) || qty < 1) qty = 1;
     input.value = Math.min(qty, max);
 }
-
+//Keranjang
 function renderCartView() {
     const content = document.getElementById('cartContent');
     if (!content) return;
@@ -412,7 +412,7 @@ function showCart() {
 function hideCart() {
     document.getElementById('cartOverlay').classList.add('d-none');
 }
-
+//Cekout
 function showCheckoutForm() {
     const content = document.getElementById('cartContent');
     const total = computeTotal();
